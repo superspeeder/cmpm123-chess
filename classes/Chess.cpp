@@ -47,6 +47,7 @@ void Chess::setUpBoard()
 
     _grid->initializeChessSquares(pieceSize, "boardsquare.png");
     FENtoBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+    // FENtoBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     startGame();
 }
@@ -61,6 +62,45 @@ void Chess::FENtoBoard(const std::string& fen) {
     // 3: castling availability (KQkq or -)
     // 4: en passant target square (in algebraic notation, or -)
     // 5: halfmove clock (number of halfmoves since the last capture or pawn advance)
+
+    const auto end_of_placement = fen.find(' ');
+    std::string placement;
+    if (end_of_placement != std::string::npos) {
+        placement = fen.substr(0, end_of_placement);
+    } else {
+        placement = fen;
+    }
+
+    int row = 0;
+    int row_end = -1;
+
+    do {
+        placement = placement.substr(row_end + 1);
+        row_end = placement.find('/');
+        int col = 0;
+        for (const char c : placement.substr(0, row_end)) {
+            switch (c) {
+            case 'r': setPieceAt(0, Rook, col, row); ++col; break;
+            case 'R': setPieceAt(1, Rook, col, row); ++col; break;
+            case 'p': setPieceAt(0, Pawn, col, row); ++col; break;
+            case 'P': setPieceAt(1, Pawn, col, row); ++col; break;
+            case 'n': setPieceAt(0, Knight, col, row); ++col; break;
+            case 'N': setPieceAt(1, Knight, col, row); ++col; break;
+            case 'b': setPieceAt(0, Bishop, col, row); ++col; break;
+            case 'B': setPieceAt(1, Bishop, col, row); ++col; break;
+            case 'q': setPieceAt(0, Queen, col, row); ++col; break;
+            case 'Q': setPieceAt(1, Queen, col, row); ++col; break;
+            case 'k': setPieceAt(0, King, col, row); ++col; break;
+            case 'K': setPieceAt(1, King, col, row); ++col; break;
+            default: {
+                if (c > '0' && c <= '8') {
+                    col += c - '0';
+                }
+            } break;
+            }
+        }
+        ++row;
+    } while (row_end != std::string::npos);
 }
 
 bool Chess::actionForEmptyHolder(BitHolder &holder)
@@ -138,4 +178,15 @@ void Chess::setStateString(const std::string &s)
             square->setBit(nullptr);
         }
     });
+}
+
+void Chess::setPieceAt(const int playerNumber, ChessPiece piece, int x, int y) {
+    ChessSquare* holder = _grid->getSquare(x, y);
+    if (!holder) {
+        return;
+    }
+
+    Bit* bit = PieceForPlayer(playerNumber, piece);
+    bit->setPosition(holder->getPosition());
+    holder->setBit(bit);
 }

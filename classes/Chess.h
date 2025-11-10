@@ -44,6 +44,7 @@ private:
     Player* ownerAt(int x, int y) const;
     void FENtoBoard(const std::string& fen);
     char pieceNotation(int x, int y) const;
+    void setPieceAt(const int playerNumber, ChessPiece piece, int x, int y);
 
     Grid* _grid;
 };
