@@ -11,3 +11,6 @@ FENtoBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 (you can ignore the end for now)
 
 This will allow you to quickly check that your castling, promotion and en passant code is working.
+
+## Screenshot
+![screenshot.png](screenshot.png)
