@@ -1,16 +1,13 @@
-Fork or clone your this chess project into a new GitHub repository.
+My implementation for move generation just uses the bitboard methods explained in class. I added a couple quality of life things to bitboards (just some easy operator overloads to make working with them a bit easier for me).
+I also used bitboards and shifts for pawn move generation.
 
-Add support for FEN stringsLinks to an external site. to your game setup so that instead of the current way you are setting up your game board you are setting it up with a call similar to the following call.
+I added an ImGui window that shows the list of possible moves and gives the user a button to play one at random (it's really funny to watch the king run around the screen capturing pieces).
 
-FENtoBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+It's also possible to make all the implemented moves manually (you can't make illegal moves, but not all legal moves are currently available yet).
 
-Your routine should be able to take just the board position portion of a FEN string, or the entire FEN string like so:
+I also added defined values to the ChessPiece enum so that I could use it in a bit's gameTag to easily get which piece a bit represents without worrying about compiler weirdnesses (I am pretty sure that enum default values are well defined, but I don't want to trust that and would rather do it myself).
 
-FENtoBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+## Screenshots
+![moves_board_screenshot.png](moves_board_screenshot.png)
 
-(you can ignore the end for now)
-
-This will allow you to quickly check that your castling, promotion and en passant code is working.
-
-## Screenshot
-![screenshot.png](screenshot.png)
+![moves_move_screenshot.png](moves_move_screenshot.png)

@@ -2,45 +2,94 @@
 #include <limits>
 #include <cmath>
 
-Chess::Chess()
-{
-    _grid = new Grid(8, 8);
+static std::array<BitBoard, 64> generateBitboards(BitBoard (*f)(int)) {
+    std::array<BitBoard, 64> boards;
+    for (int i = 0; i < 64; i++) {
+        boards[i] = f(i);
+    }
+
+    return boards;
 }
 
-Chess::~Chess()
-{
+Chess::Chess() {
+    _grid            = new Grid(8, 8);
+    _knightBitboards = generateBitboards(+[](int square) {
+        BitBoard bitboard = 0ULL;
+        int      rank     = square / 8;
+        int      file     = square % 8;
+
+        std::pair<int, int> offsets[8] = {
+            {-2, -1}, {2, -1}, {-2, 1}, {2, 1},
+            {-1, -2}, {1, -2}, {-1, 2}, {1, 2}
+        };
+        bitboard |= 1ULL << square;
+
+        for (const auto& [ro, fo] : offsets) {
+            int r = rank + ro;
+            int f = file + fo;
+
+            if (r >= 0 && r < 8 && f >= 0 && f < 8) {
+                bitboard |= 1ULL << (r * 8 + f);
+            }
+        }
+
+        return bitboard;
+    });
+
+    _kingBitboards = generateBitboards(+[](int square) {
+        BitBoard            bitboard   = 0ULL;
+        int                 rank       = square / 8;
+        int                 file       = square % 8;
+        std::pair<int, int> offsets[8] = {
+            {-1, -1}, {-1, 0}, {-1, 1},
+            {0, -1}, {0, 1},
+            {1, -1}, {1, 0}, {1, 1},
+        };
+
+        for (const auto& [ro, fo] : offsets) {
+            int r = rank + ro;
+            int f = file + fo;
+
+            if (r >= 0 && r < 8 && f >= 0 && f < 8) {
+                bitboard |= 1ULL << (r * 8 + f);
+            }
+        }
+
+        return bitboard;
+    });
+}
+
+Chess::~Chess() {
     delete _grid;
 }
 
-char Chess::pieceNotation(int x, int y) const
-{
-    const char *wpieces = { "0PNBRQK" };
-    const char *bpieces = { "0pnbrqk" };
-    Bit *bit = _grid->getSquare(x, y)->bit();
-    char notation = '0';
+char Chess::pieceNotation(int x, int y) const {
+    const char* wpieces  = {"0PNBRQK"};
+    const char* bpieces  = {"0pnbrqk"};
+    Bit*        bit      = _grid->getSquare(x, y)->bit();
+    char        notation = '0';
     if (bit) {
-        notation = bit->gameTag() < 128 ? wpieces[bit->gameTag()] : bpieces[bit->gameTag()-128];
+        notation = bit->gameTag() < 128 ? wpieces[bit->gameTag()] : bpieces[bit->gameTag() - 128];
     }
     return notation;
 }
 
-Bit* Chess::PieceForPlayer(const int playerNumber, ChessPiece piece)
-{
-    const char* pieces[] = { "pawn.png", "knight.png", "bishop.png", "rook.png", "queen.png", "king.png" };
+Bit* Chess::PieceForPlayer(const int playerNumber, ChessPiece piece) {
+    const char* pieces[] = {"pawn.png", "knight.png", "bishop.png", "rook.png", "queen.png", "king.png"};
 
     Bit* bit = new Bit();
     // should possibly be cached from player class?
-    const char* pieceName = pieces[piece - 1];
+    const char* pieceName  = pieces[piece - 1];
     std::string spritePath = std::string("") + (playerNumber == 0 ? "w_" : "b_") + pieceName;
     bit->LoadTextureFromFile(spritePath.c_str());
     bit->setOwner(getPlayerAt(playerNumber));
     bit->setSize(pieceSize, pieceSize);
+    bit->setGameTag((playerNumber << 7) | (piece & 0x7));
 
     return bit;
 }
 
-void Chess::setUpBoard()
-{
+void Chess::setUpBoard() {
     setNumberOfPlayers(2);
     _gameOptions.rowX = 8;
     _gameOptions.rowY = 8;
@@ -63,74 +112,127 @@ void Chess::FENtoBoard(const std::string& fen) {
     // 4: en passant target square (in algebraic notation, or -)
     // 5: halfmove clock (number of halfmoves since the last capture or pawn advance)
 
-    const auto end_of_placement = fen.find(' ');
+    const auto  end_of_placement = fen.find(' ');
     std::string placement;
     if (end_of_placement != std::string::npos) {
         placement = fen.substr(0, end_of_placement);
-    } else {
+    }
+    else {
         placement = fen;
     }
 
-    int row = 0;
+    int row     = 0;
     int row_end = -1;
 
     do {
         placement = placement.substr(row_end + 1);
-        row_end = placement.find('/');
-        int col = 0;
+        row_end   = placement.find('/');
+        int col   = 0;
         for (const char c : placement.substr(0, row_end)) {
             switch (c) {
-            case 'r': setPieceAt(0, Rook, col, row); ++col; break;
-            case 'R': setPieceAt(1, Rook, col, row); ++col; break;
-            case 'p': setPieceAt(0, Pawn, col, row); ++col; break;
-            case 'P': setPieceAt(1, Pawn, col, row); ++col; break;
-            case 'n': setPieceAt(0, Knight, col, row); ++col; break;
-            case 'N': setPieceAt(1, Knight, col, row); ++col; break;
-            case 'b': setPieceAt(0, Bishop, col, row); ++col; break;
-            case 'B': setPieceAt(1, Bishop, col, row); ++col; break;
-            case 'q': setPieceAt(0, Queen, col, row); ++col; break;
-            case 'Q': setPieceAt(1, Queen, col, row); ++col; break;
-            case 'k': setPieceAt(0, King, col, row); ++col; break;
-            case 'K': setPieceAt(1, King, col, row); ++col; break;
+            case 'r': setPieceAt(0, Rook, col, row);
+                ++col;
+                break;
+            case 'R': setPieceAt(1, Rook, col, row);
+                ++col;
+                break;
+            case 'p': setPieceAt(0, Pawn, col, row);
+                ++col;
+                break;
+            case 'P': setPieceAt(1, Pawn, col, row);
+                ++col;
+                break;
+            case 'n': setPieceAt(0, Knight, col, row);
+                ++col;
+                break;
+            case 'N': setPieceAt(1, Knight, col, row);
+                ++col;
+                break;
+            case 'b': setPieceAt(0, Bishop, col, row);
+                ++col;
+                break;
+            case 'B': setPieceAt(1, Bishop, col, row);
+                ++col;
+                break;
+            case 'q': setPieceAt(0, Queen, col, row);
+                ++col;
+                break;
+            case 'Q': setPieceAt(1, Queen, col, row);
+                ++col;
+                break;
+            case 'k': setPieceAt(0, King, col, row);
+                ++col;
+                break;
+            case 'K': setPieceAt(1, King, col, row);
+                ++col;
+                break;
             default: {
                 if (c > '0' && c <= '8') {
                     col += c - '0';
                 }
-            } break;
+            }
+            break;
             }
         }
         ++row;
-    } while (row_end != std::string::npos);
+    }
+    while (row_end != std::string::npos);
 }
 
-bool Chess::actionForEmptyHolder(BitHolder &holder)
-{
+bool Chess::actionForEmptyHolder(BitHolder& holder) {
     return false;
 }
 
-bool Chess::canBitMoveFrom(Bit &bit, BitHolder &src)
-{
+bool Chess::canBitMoveFrom(Bit& bit, BitHolder& src) {
     // need to implement friendly/unfriendly in bit so for now this hack
     int currentPlayer = getCurrentPlayer()->playerNumber() * 128;
-    int pieceColor = bit.gameTag() & 128;
+    int pieceColor    = bit.gameTag() & 128;
     if (pieceColor == currentPlayer) return true;
     return false;
 }
 
-bool Chess::canBitMoveFromTo(Bit &bit, BitHolder &src, BitHolder &dst)
-{
-    return true;
+bool Chess::canBitMoveFromTo(Bit& bit, BitHolder& src, BitHolder& dst) {
+    if (dst.bit() && !((dst.bit()->gameTag() ^ bit.gameTag()) >> 7)) {
+        return false;
+    }
+
+    const auto movingPiece = static_cast<ChessPiece>(bit.gameTag() & 0x7);
+    auto*      csquare     = static_cast<ChessSquare*>(&src);
+    auto*      dsquare     = static_cast<ChessSquare*>(&dst);
+
+    const int square = csquare->getSquareIndex();
+    const int dsqr   = dsquare->getSquareIndex();
+
+    switch (movingPiece) {
+    case NoPiece:
+        return false;
+    case King:
+        return _kingBitboards[square].testSquare(dsqr);
+    case Pawn:
+        if (bit.gameTag() & 128) {
+            // black
+            return dsqr == (square - 8) || (square >= 48 && square < 56 && dsqr == (square - 16));
+        }
+        return dsqr == (square + 8) || (square >= 8 && square < 16 && dsqr == (square + 16));
+    case Knight:
+        return _knightBitboards[square].testSquare(dsqr);
+    case Bishop:
+        return false;
+    case Rook:
+        return true;
+    case Queen:
+        return false;
+    }
+    return false;
 }
 
-void Chess::stopGame()
-{
+void Chess::stopGame() {
     _grid->forEachSquare([](ChessSquare* square, int x, int y) {
         square->destroyBit();
     });
 }
 
-Player* Chess::ownerAt(int x, int y) const
-{
+Player* Chess::ownerAt(int x, int y) const {
     if (x < 0 || x >= 8 || y < 0 || y >= 8) {
         return nullptr;
     }
@@ -142,39 +244,36 @@ Player* Chess::ownerAt(int x, int y) const
     return square->bit()->getOwner();
 }
 
-Player* Chess::checkForWinner()
-{
+Player* Chess::checkForWinner() {
     return nullptr;
 }
 
-bool Chess::checkForDraw()
-{
+bool Chess::checkForDraw() {
     return false;
 }
 
-std::string Chess::initialStateString()
-{
+std::string Chess::initialStateString() {
     return stateString();
 }
 
-std::string Chess::stateString()
-{
+std::string Chess::stateString() {
     std::string s;
     s.reserve(64);
     _grid->forEachSquare([&](ChessSquare* square, int x, int y) {
-            s += pieceNotation( x, y );
+            s += pieceNotation(x, y);
         }
     );
-    return s;}
+    return s;
+}
 
-void Chess::setStateString(const std::string &s)
-{
+void Chess::setStateString(const std::string& s) {
     _grid->forEachSquare([&](ChessSquare* square, int x, int y) {
-        int index = y * 8 + x;
+        int  index        = y * 8 + x;
         char playerNumber = s[index] - '0';
         if (playerNumber) {
             square->setBit(PieceForPlayer(playerNumber - 1, Pawn));
-        } else {
+        }
+        else {
             square->setBit(nullptr);
         }
     });
@@ -189,4 +288,149 @@ void Chess::setPieceAt(const int playerNumber, ChessPiece piece, int x, int y) {
     Bit* bit = PieceForPlayer(playerNumber, piece);
     bit->setPosition(holder->getPosition());
     holder->setBit(bit);
+}
+
+void Chess::generateKnightMoves(std::vector<BitMove>& moves, BitBoard knightBoard, uint64_t emptySquares) {
+    knightBoard.forEachBit([&](int square) {
+        BitBoard moveBitboard = _knightBitboards[square].getData() & emptySquares;
+        moveBitboard.forEachBit([&](int to) {
+            moves.emplace_back(square, to, Knight);
+        });
+    });
+}
+
+void Chess::generateKingMoves(std::vector<BitMove>& moves, BitBoard kingBoard, uint64_t emptySquares) {
+    kingBoard.forEachBit([&](int square) {
+        BitBoard moveBitboard = _kingBitboards[square].getData() & emptySquares;
+        moveBitboard.forEachBit([&](int to) {
+            moves.emplace_back(square, to, King);
+        });
+    });
+}
+
+void Chess::generatePawnMoves(std::vector<BitMove>& moves, BitBoard   pawnBoard, uint64_t emptySquares,
+                              uint64_t              enemySquares, int playerNumber) {
+    BitBoard           singleMoves, doubleMoves, capturesLeft, capturesRight;
+    int                singleShift, doubleShift, leftShift,    rightShift;
+    constexpr uint64_t FL = 0xfefefefefefefeULL;
+    constexpr uint64_t FR = 0x7f7f7f7f7f7f7fULL;
+
+    if (playerNumber == 0) {
+        constexpr uint64_t R3 = 0xff0000;
+        singleShift           = 8;
+        doubleShift           = 16;
+        leftShift             = 7;
+        rightShift            = 9;
+
+        singleMoves   = (pawnBoard << 8) & emptySquares;
+        doubleMoves   = ((singleMoves & R3) << 8) & emptySquares;
+        capturesLeft  = ((pawnBoard & FL) << 7) & enemySquares;
+        capturesRight = ((pawnBoard & FR) << 9) & enemySquares;
+    }
+    else {
+        constexpr uint64_t R6 = 0x0000ff00'00000000;
+        singleShift           = -8;
+        doubleShift           = -16;
+        leftShift             = -9;
+        rightShift            = -7;
+
+        singleMoves   = (pawnBoard >> 8) & emptySquares;
+        doubleMoves   = ((singleMoves & R6) >> 8) & emptySquares;
+        capturesLeft  = ((pawnBoard & FL) >> 9) & enemySquares;
+        capturesRight = ((pawnBoard & FR) >> 7) & enemySquares;
+    }
+
+    addPawnMoves(moves, singleMoves, singleShift);
+    addPawnMoves(moves, doubleMoves, doubleShift);
+    addPawnMoves(moves, capturesLeft, leftShift);
+    addPawnMoves(moves, capturesRight, rightShift);
+}
+
+void Chess::addPawnMoves(std::vector<BitMove>& moves, BitBoard movesBoard, int shift) {
+    movesBoard.forEachBit([&](int square) {
+        int from = square - shift;
+        moves.emplace_back(from, square, Pawn);
+    });
+}
+
+std::pair<BitBoardSet, BitBoardSet> Chess::calculateTurnBoards() {
+    BitBoardSet white{}, black{};
+
+    uint64_t nextbit = 1;
+    for (int rank = 0; rank < 8; ++rank) {
+        for (int file = 0; file < 8; ++file) {
+            uint64_t setbit = nextbit;
+            nextbit <<= 1;
+            Bit* bit = _grid->getSquare(file, rank)->bit();
+            if (!bit) {
+                continue;
+            }
+
+            BitBoardSet& set = bit->gameTag() & 128 ? black : white;
+            switch ((ChessPiece)(bit->gameTag() & 7)) {
+            case NoPiece:
+                break;
+            case Pawn:
+                set.pawn |= setbit;
+                break;
+            case Knight:
+                set.knight |= setbit;
+                break;
+            case Bishop:
+                set.bishop |= setbit;
+                break;
+            case Rook:
+                set.rook |= setbit;
+                break;
+            case Queen:
+                set.queen |= setbit;
+                break;
+            case King:
+                set.king |= setbit;
+                break;
+            }
+        }
+    }
+
+    return {white, black};
+}
+
+struct boardset {
+    BitBoardSet &a, &b;
+};
+
+std::vector<BitMove> Chess::generateAllMoves() {
+    auto [white, black] = calculateTurnBoards();
+    std::vector<BitMove> moves;
+    auto [player, opponent] = getCurrentPlayer()->playerNumber() == 0 ? boardset{white, black} : boardset{black, white};
+
+    const BitBoard emptySquares = ~(player.queen | player.bishop | player.king | player.rook | player.knight | player.
+                                    pawn);
+
+    const BitBoard enemySquares = opponent.queen | opponent.bishop | opponent.king | opponent.rook | opponent.knight |
+                                  opponent.pawn;
+
+    generateKingMoves(moves, player.king, emptySquares);
+    generateKnightMoves(moves, player.knight, emptySquares);
+    generatePawnMoves(moves, player.pawn, emptySquares, enemySquares, getCurrentPlayer()->playerNumber());
+
+    return moves;
+}
+
+void Chess::makeMove(const BitMove& move) {
+    ChessSquare* from = _grid->getSquareByIndex(move.from);
+    ChessSquare* to   = _grid->getSquareByIndex(move.to);
+    if (!from || !to) {
+        return;
+    }
+    Bit* bit = from->bit();
+    if (!bit) { return; }
+
+    if (Bit* take = to->bit()) {
+        pieceTaken(take);
+    }
+
+    to->dropBitAtPoint(bit, bit->getPosition());
+    from->draggedBitTo(bit, to);
+    bitMovedFromTo(*bit, *from, *to);
 }
