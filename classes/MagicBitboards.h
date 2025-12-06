@@ -828,7 +828,7 @@ static inline uint64_t getQueenAttacks(int square, uint64_t occupied) {
 }
 
 // Initialize magic bitboards
-inline void initMagicBitboards(void) {
+void initMagicBitboards(void) {
     int square, i;
     uint64_t subset, index;
 
@@ -862,7 +862,7 @@ inline void initMagicBitboards(void) {
 }
 
 // Cleanup magic bitboard tables
-inline void cleanupMagicBitboards(void) {
+void cleanupMagicBitboards(void) {
     int square;
     for (square = 0; square < 64; square++) {
         delete[] RAttacks[square];

@@ -1,13 +1,21 @@
-My implementation for move generation just uses the bitboard methods explained in class. I added a couple quality of life things to bitboards (just some easy operator overloads to make working with them a bit easier for me).
-I also used bitboards and shifts for pawn move generation.
+## Implementation details
 
-I added an ImGui window that shows the list of possible moves and gives the user a button to play one at random (it's really funny to watch the king run around the screen capturing pieces).
+I implemented move generation just in time to replace it with the move generation in the GameState class that was
+provided (which I used because it was significantly better than my own generation code). I just used the basic
+evaluation function that was suggested with very little changes (had to tweak it a bit because it kept just getting rid
+of pieces).
 
-It's also possible to make all the implemented moves manually (you can't make illegal moves, but not all legal moves are currently available yet).
+## Final Version Challenges
 
-I also added defined values to the ChessPiece enum so that I could use it in a bit's gameTag to easily get which piece a bit represents without worrying about compiler weirdnesses (I am pretty sure that enum default values are well defined, but I don't want to trust that and would rather do it myself).
+I didn't really run into many big challenges. I wish I could've spent more time working on making my move generation
+faster or evaluation function better, but I barely had the time to do the base version of this assignment due to work
+from my other classes. I am still happy with the outcome (though that might be because once I realized that something
+was wrong in my evaluation function I fixed that and it stopped throwing pieces away constantly, and im really not very
+good at chess). I also wish I had time to get the fancier moves implemented.
 
-## Screenshots
-![moves_board_screenshot.png](moves_board_screenshot.png)
+The best depth I've been able to run it at was 6, though it's rather slow. Running at 5 produced pretty good results and
+was able to beat me (I suck at chess though).
 
-![moves_move_screenshot.png](moves_move_screenshot.png)
+## Video
+
+![video](video.mp4)

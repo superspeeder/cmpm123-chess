@@ -88,29 +88,29 @@ namespace ClassGame {
         }
         ImGui::End();
 
-        ImGui::Begin("Possible Moves");
-        if (auto* chess = dynamic_cast<Chess*>(game)) {
-            auto moves = chess->generateAllMoves();
-            if (moves.empty()) ImGui::BeginDisabled(true);
-            if (ImGui::Button("Play Random Move")) {
-                static std::random_device rd;
-                static std::mt19937 gen(rd());
-                std::uniform_int_distribution<> dis(0, moves.size() - 1);
-
-                chess->makeMove(moves[dis(gen)]);
-            }
-            if (moves.empty()) ImGui::EndDisabled();
-            ImGui::Text("There are %d possible moves", (uint32_t)(moves.size()));
-            ImGui::Separator();
-            for (const auto& move : moves) {
-                int fx = move.from % 8, fy = move.from / 8, tx = move.to % 8, ty = move.to / 8;
-                constexpr const char* pieceNames[] = {"", "pawn", "knight", "bishop", "rook", "queen", "king"};
-                constexpr char r[] = {'1','2','3','4','5','6','7','8'};
-                constexpr char f[] = {'a','b','c','d','e','f','g','h'};
-                ImGui::Text("%c%c -> %c%c ; %s", f[fx], r[fy], f[tx], r[ty], pieceNames[move.piece]);
-            }
-        }
-        ImGui::End();
+        // ImGui::Begin("Possible Moves");
+        // if (auto* chess = dynamic_cast<Chess*>(game)) {
+        //     auto moves = chess->generateAllMoves();
+        //     if (moves.empty()) ImGui::BeginDisabled(true);
+        //     if (ImGui::Button("Play Random Move")) {
+        //         static std::random_device rd;
+        //         static std::mt19937 gen(rd());
+        //         std::uniform_int_distribution<> dis(0, moves.size() - 1);
+        //
+        //         chess->makeMove(moves[dis(gen)]);
+        //     }
+        //     if (moves.empty()) ImGui::EndDisabled();
+        //     ImGui::Text("There are %d possible moves", (uint32_t)(moves.size()));
+        //     ImGui::Separator();
+        //     for (const auto& move : moves) {
+        //         int fx = move.from % 8, fy = move.from / 8, tx = move.to % 8, ty = move.to / 8;
+        //         constexpr const char* pieceNames[] = {"", "pawn", "knight", "bishop", "rook", "queen", "king"};
+        //         constexpr char r[] = {'1','2','3','4','5','6','7','8'};
+        //         constexpr char f[] = {'a','b','c','d','e','f','g','h'};
+        //         ImGui::Text("%c%c -> %c%c ; %s", f[fx], r[fy], f[tx], r[ty], pieceNames[move.piece]);
+        //     }
+        // }
+        // ImGui::End();
     }
 
     //

@@ -3,6 +3,7 @@
 #include "Game.h"
 #include "Grid.h"
 #include "Bitboard.h"
+#include "GameState.h"
 #include <array>
 
 constexpr int pieceSize = 80;
@@ -72,8 +73,6 @@ public:
     void        setStateString(const std::string& s) override;
 
     Grid* getGrid() override { return _grid; }
-
-    std::vector<BitMove> generateAllMoves();
 
     void makeMove(const BitMove& move);
 
